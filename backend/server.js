@@ -5,7 +5,7 @@ const app = express();
 
 // Configuración de PostgreSQL
 const pool = new Pool({
-  user: 'postgres',
+  user: 'inventario_user',
   host: 'localhost',
   database: 'inventario_db',
   password: '123456789', // Cambia esto
