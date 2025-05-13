@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Inventario PostgreSQL</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      form {
+        margin: 20px 0;
+      }
+      input,
+      button {
+        padding: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Inventarios Rapidos</h1>
+
+    <!-- Formulario para agregar productos -->
+    <form id="formProducto">
+      <input type="text" id="nombre" placeholder="Nombre" required />
+      <input type="number" id="cantidad" placeholder="Cantidad" required />
+      <button type="submit">Agregar</button>
+    </form>
+
+    <!-- Tabla de productos -->
+    <table id="tablaProductos">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Cantidad</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <script>
+  // Función para cargar productos
+  const cargarProductos = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/api/productos');
+      const data = await response.json();
+      const tbody = document.querySelector('#tablaProductos tbody');
+      tbody.innerHTML = data.map(p => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.nombre}</td>
+          <td>${p.cantidad}</td>
+        </tr>
+      `).join('');
+    } catch (error) {
+      console.error("Error cargando productos:", error);
+    }
+  };
+
+  // Agregar producto
+  document.getElementById('formProducto').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const producto = {
+      nombre: document.getElementById('nombre').value,
+      cantidad: document.getElementById('cantidad').value
+    };
+
+    try {
+      const response = await fetch('http://localhost:5001/api/productos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(producto)
+      });
+
+      if (!response.ok) throw new Error('Error en la respuesta');
+
+      // Recarga los productos y limpia el formulario
+      cargarProductos();
+      document.getElementById('formProducto').reset();
+      
+    } catch (error) {
+      console.error("Error agregando producto:", error);
+      alert("Error al agregar producto. Revisa la consola.");
+    }
+  });
+
+  // Carga inicial
+  cargarProductos();
+</script>
+  </body>
+</html>
