@@ -1,103 +1,368 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Inventario PostgreSQL</title>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventario</title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-      }
-      table {
-        border-collapse: collapse;
-        width: 100%;
-      }
-      th,
-      td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: left;
-      }
-      form {
-        margin: 20px 0;
-      }
-      input,
-      button {
-        padding: 8px;
-      }
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #e9e9e9;
+        }
+        form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex-grow: 1;
+            min-width: 200px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .btn-agregar {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .btn-editar {
+            background-color: #f39c12;
+            color: white;
+            margin-right: 5px;
+        }
+        .btn-eliminar {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .btn-cerrar {
+            background-color: #95a5a6;
+            color: white;
+        }
+        #modalEditar {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 400px;
+            max-width: 90%;
+        }
+        .modal-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .modal-title {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .error-message {
+            color: #e74c3c;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
     </style>
-  </head>
-  <body>
-    <h1>Inventarios Rapidos</h1>
-
+</head>
+<body>
+    <h1>📦 Sistema de Inventario</h1>
+    
     <!-- Formulario para agregar productos -->
     <form id="formProducto">
-      <input type="text" id="nombre" placeholder="Nombre" required />
-      <input type="number" id="cantidad" placeholder="Cantidad" required />
-      <button type="submit">Agregar</button>
+        <input type="text" id="nombre" placeholder="Nombre del producto" required>
+        <input type="number" id="cantidad" placeholder="Cantidad" min="0" required>
+        <button type="submit" class="btn-agregar">➕ Agregar Producto</button>
     </form>
 
     <!-- Tabla de productos -->
     <table id="tablaProductos">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Cantidad</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Cantidad</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="4">Cargando inventario...</td>
+            </tr>
+        </tbody>
     </table>
+
+    <!-- Modal para editar productos -->
+    <div id="modalEditar">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ Editar Producto</h3>
+            </div>
+            <form id="formEditar">
+                <div>
+                    <label for="editNombre">Nombre:</label>
+                    <input type="text" id="editNombre" required>
+                    <div id="nombreError" class="error-message"></div>
+                </div>
+                <div>
+                    <label for="editCantidad">Cantidad:</label>
+                    <input type="number" id="editCantidad" min="0" required>
+                    <div id="cantidadError" class="error-message"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cerrar" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn-agregar">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-  // Función para cargar productos
-  const cargarProductos = async () => {
-    try {
-      const response = await fetch('http://localhost:5001/api/productos');
-      const data = await response.json();
-      const tbody = document.querySelector('#tablaProductos tbody');
-      tbody.innerHTML = data.map(p => `
-        <tr>
-          <td>${p.id}</td>
-          <td>${p.nombre}</td>
-          <td>${p.cantidad}</td>
-        </tr>
-      `).join('');
-    } catch (error) {
-      console.error("Error cargando productos:", error);
-    }
-  };
+        // Variables globales
+        let productoEditando = null;
 
-  // Agregar producto
-  document.getElementById('formProducto').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const producto = {
-      nombre: document.getElementById('nombre').value,
-      cantidad: document.getElementById('cantidad').value
-    };
+        // Cargar productos al iniciar
+        document.addEventListener('DOMContentLoaded', cargarProductos);
 
-    try {
-      const response = await fetch('http://localhost:5001/api/productos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(producto)
-      });
+        // Función para cargar productos desde el backend
+        async function cargarProductos() {
+            try {
+                const response = await fetch('http://localhost:5001/api/productos');
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                actualizarTabla(data);
+            } catch (error) {
+                console.error('Error al cargar productos:', error);
+                mostrarErrorEnTabla(`Error al cargar productos: ${error.message}`);
+            }
+        }
 
-      if (!response.ok) throw new Error('Error en la respuesta');
+        // Actualizar la tabla con los datos recibidos
+        function actualizarTabla(productos) {
+            const tbody = document.querySelector('#tablaProductos tbody');
+            
+            if (productos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">No hay productos registrados</td></tr>';
+                return;
+            }
 
-      // Recarga los productos y limpia el formulario
-      cargarProductos();
-      document.getElementById('formProducto').reset();
-      
-    } catch (error) {
-      console.error("Error agregando producto:", error);
-      alert("Error al agregar producto. Revisa la consola.");
-    }
-  });
+            tbody.innerHTML = productos.map(producto => `
+                <tr>
+                    <td>${producto.id}</td>
+                    <td>${producto.nombre}</td>
+                    <td>${producto.cantidad}</td>
+                    <td>
+                        <button class="btn-editar" onclick="abrirModalEditar(${producto.id}, '${escapeHtml(producto.nombre)}', ${producto.cantidad})">
+                            Editar
+                        </button>
+                        <button class="btn-eliminar" onclick="eliminarProducto(${producto.id})">
+                            Eliminar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
 
-  // Carga inicial
-  cargarProductos();
-</script>
-  </body>
+        // Mostrar mensaje de error en la tabla
+        function mostrarErrorEnTabla(mensaje) {
+            document.querySelector('#tablaProductos tbody').innerHTML = `
+                <tr>
+                    <td colspan="4" style="color:red; text-align:center;">
+                        ${mensaje}<br>
+                        <button onclick="cargarProductos()">Reintentar</button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Escapar caracteres HTML para seguridad
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Agregar nuevo producto
+        document.getElementById('formProducto').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const producto = {
+                nombre: document.getElementById('nombre').value.trim(),
+                cantidad: document.getElementById('cantidad').value
+            };
+
+            try {
+                const response = await fetch('http://localhost:5001/api/productos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(producto)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Error al agregar producto');
+                }
+
+                document.getElementById('formProducto').reset();
+                cargarProductos();
+            } catch (error) {
+                console.error('Error al agregar producto:', error);
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // Abrir modal de edición
+        function abrirModalEditar(id, nombre, cantidad) {
+            productoEditando = { id, nombre, cantidad };
+            document.getElementById('editNombre').value = nombre;
+            document.getElementById('editCantidad').value = cantidad;
+            document.getElementById('modalEditar').style.display = 'block';
+            
+            // Limpiar errores anteriores
+            document.getElementById('nombreError').textContent = '';
+            document.getElementById('cantidadError').textContent = '';
+        }
+
+        // Cerrar modal
+        function cerrarModal() {
+            document.getElementById('modalEditar').style.display = 'none';
+            productoEditando = null;
+        }
+
+        // Guardar cambios al editar
+        document.getElementById('formEditar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const productoActualizado = {
+                nombre: document.getElementById('editNombre').value.trim(),
+                cantidad: document.getElementById('editCantidad').value
+            };
+
+            // Validación
+            let isValid = true;
+            
+            if (!productoActualizado.nombre) {
+                document.getElementById('nombreError').textContent = 'El nombre es requerido';
+                isValid = false;
+            }
+            
+            if (isNaN(productoActualizado.cantidad) || productoActualizado.cantidad < 0) {
+                document.getElementById('cantidadError').textContent = 'Cantidad inválida';
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            try {
+                console.log('Enviando actualización para:', productoEditando.id, productoActualizado);
+                
+                const response = await fetch(`http://localhost:5001/api/productos/${productoEditando.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(productoActualizado)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Error al guardar cambios');
+                }
+
+                const data = await response.json();
+                console.log('Producto actualizado:', data);
+                
+                cerrarModal();
+                cargarProductos();
+            } catch (error) {
+                console.error('Error al editar producto:', error);
+                alert(`Error al editar: ${error.message}`);
+            }
+        });
+
+        // Eliminar producto
+        async function eliminarProducto(id) {
+            if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+            
+            try {
+                const response = await fetch(`http://localhost:5001/api/productos/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al eliminar producto');
+                }
+                
+                cargarProductos();
+            } catch (error) {
+                console.error('Error al eliminar producto:', error);
+                alert('No se pudo eliminar el producto');
+            }
+        }
+    </script>
+</body>
 </html>
