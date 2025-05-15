@@ -20,7 +20,7 @@ pool.query('SELECT NOW()', (err, res) => {
 
 // Middlewares
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000','http://172.207.73.150'],
   methods: ['GET', 'POST', 'PUT', 'DELETE']
 }));
 app.use(express.json());
