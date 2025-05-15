@@ -254,7 +254,7 @@
             };
 
             try {
-                const response = await fetch('http://localhost:5001/api/productos', {
+                const response = await fetch('http://172.207.73.150:5001/api/productos', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -320,7 +320,7 @@
             try {
                 console.log('Enviando actualización para:', productoEditando.id, productoActualizado);
                 
-                const response = await fetch(`http://localhost:5001/api/productos/${productoEditando.id}`, {
+                const response = await fetch(`http://172.207.73.150:5001/api/productos/${productoEditando.id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -349,7 +349,7 @@
             if (!confirm('¿Estás seguro de eliminar este producto?')) return;
             
             try {
-                const response = await fetch(`http://localhost:5001/api/productos/${id}`, {
+                const response = await fetch(`http://172.207.73.150:5001/api/productos/${id}`, {
                     method: 'DELETE'
                 });
 
