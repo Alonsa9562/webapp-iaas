@@ -182,10 +182,10 @@
         // Función para cargar productos desde el backend
         async function cargarProductos() {
             try {
-                const response = await fetch('http://localhost:5001/api/productos');
+                const response = await fetch('http://172.207.73.150:5001/api/productos');
                 
                 if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
+                    throw new Error(`Error HTTP: ${response.status}: ${await response.text()}`);
                 }
                 
                 const data = await response.json();
