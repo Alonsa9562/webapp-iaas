@@ -113,6 +113,6 @@ app.use((req, res) => {
 
 // Iniciar servidor
 const PORT = 5001;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+app.listen(PORT,'0.0.0.0' () => {
+  console.log(`🚀 Servidor corriendo en http://52.185.185.192:${PORT}`);
 });
